@@ -16,6 +16,17 @@
   </div>
   <script>
   
+  var btn = document.querySelector('#btn');
+  var inp = document.querySelector('#inp');
+  var out = document.querySelector('#out');
+  var out2 = document.querySelector('#out2');
+  
+  var out3 = document.querySelector('#out3');
+  var out4 = document.querySelector('#out4');
+
+
+
+  
     var clickCnt = 0;
     var clicks = Sob.fromDOMEvent(btn, 'click').map(function(){
       return clickCnt++;
