@@ -1,0 +1,58 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+  <script src="sob.js"></script>
+</head>
+<body>
+  <button id="btn">button</button>
+  <input type="text" name="" id="inp">
+  <div>
+    <span id="out"></span>
+    <span id="out2"></span>
+    <span id="out3"></span>
+    <span id="out4"></span>
+  </div>
+  <script>
+  
+    var clickCnt = 0;
+    var clicks = Sob.fromDOMEvent(btn, 'click').map(function(){
+      return clickCnt++;
+    });
+    
+    
+    var inputValues = Sob.fromDOMEvent(inp, 'keydown').map(function(){
+      return inp.value;
+    });
+    
+    clicks.zip(inputValues, function(count, text){
+      return text + ', ' + count + ';';
+    }).sub(function(text){
+      var pair = document.createElement('div');
+      pair.innerHTML = text;
+      document.body.appendChild(pair);
+    });
+    
+    var timer = Sob.fromInterval(1000);
+    timer.sub(function(data){
+      out2.innerHTML = data;
+      if(data >= 10)
+        timer.dispose();
+    });
+    
+    var timer2 = timer.map(function(x){return x*2;});
+    
+    timer2.sub(function(data){
+      out3.innerHTML = data;
+      if(data >= 3){
+        timer2.first().map(function(x){return x*2}).sub(function(data){
+          out4.innerHTML = data;
+          timer2.dispose();
+        })
+      }
+    });
+  </script>
+  
+</body>
+</html>
