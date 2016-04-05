@@ -1,12 +1,3 @@
-var btn = document.querySelector('#btn');
-var inp = document.querySelector('#inp');
-var out = document.querySelector('#out');
-var out2 = document.querySelector('#out2');
-
-var out3 = document.querySelector('#out3');
-var out4 = document.querySelector('#out4');
-
-
 var Sob = (function(){
   var Sob = function(){
     this._count = 0;
