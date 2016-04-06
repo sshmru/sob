@@ -3,29 +3,30 @@ var Sob = (function(){
 		
 		this.run = function(){
 			this.active = true;
-			run(this.onNext);
+			run && run(this.onNext);
 		}.bind(this);
 		
 		this.dispose = function(){
 			this.active = false;
-			dispose();
+			dispose && dispose();
 		}.bind(this);
 		
 		this._count = 0;
 		this._subs = [];
 	};
 	
-	Sob.prototype.onNext = function(value){
+	Sob.prototype.onNext = function(){
+		var args = Array.prototype.slice.call(arguments);
 		this._count+=1;
 		this._subs.forEach(function(sub){
-			sub(value);
+			sub.apply(this, args);
 		});
 	};
 	
 	Sob.prototype.sub = function(fn){
-		if(!this.active)
-		this.run();
 		this._subs.push(fn);
+		if(!this.active)
+			this.run();
 	};
 	
 	Sob.prototype.unsub = function(fn){
@@ -124,23 +125,47 @@ var Sob = (function(){
 	};
 	
 	
-	Sob.fromDOMEvent = function(obj, ev){
+	Sob.fromArray = function(arr){
 		var sob = new Sob(
 			function(){
-				obj.addEventListener(ev, cb);
+				arr.forEach(function(item){
+					sob.onNext(item);
+				});
 			},
 			function(){
-				obj.removeEventListener(ev, cb);
 			}
 		);
-		var cb = function(){
-			sob.onNext(Array.prototype.slice.call(arguments));
-		};
 		
 		return sob;
 	};
 	
+	var getEventSob = function(obj, ev, on, off){
+		var sob = new Sob(
+			function(){
+				obj[on](ev, cb);
+			},
+			function(){
+				obj[off](ev, cb);
+			}
+		);
+		var cb = function(){
+			sob.onNext.apply(sob, Array.prototype.slice.call(arguments));
+		};
+		
+		return sob;
+	};
+
+	
+	Sob.fromDOMEvent = function(obj, ev){
+		return getEventSob(obj, ev, 'addEventListener', 'removeEventListener');
+	};
+	
+	Sob.fromEvent = function(obj, ev){
+		return getEventSob(obj, ev, 'on', 'off');
+	};
+	
 	Sob.fromInterval = function(time){
+		var itv;
 		var sob = new Sob(
 			function(){
 				itv = setInterval(function(){
@@ -151,12 +176,12 @@ var Sob = (function(){
 				clearInterval(itv);
 			}
 		);
-		var itv;
 		
 		return sob;
 	};
 	
 	Sob.fromTimeout = function(time){
+		var itv;
 		var sob = new Sob(
 			function(){
 				itv = setTimeout(function(){
@@ -168,7 +193,6 @@ var Sob = (function(){
 				clearTimeout(itv);
 			}
 		);
-		var itv;
 		
 		return sob;
 	};
