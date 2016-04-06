@@ -25,8 +25,6 @@
   var out4 = document.querySelector('#out4');
 
 
-
-  
     var clickCnt = 0;
     var clicks = Sob.fromDOMEvent(btn, 'click').map(function(){
       return clickCnt++;
@@ -37,13 +35,18 @@
       return inp.value;
     });
     
-    clicks.zip(inputValues, function(count, text){
-      return text + ', ' + count + ';';
-    }).sub(function(text){
-      var pair = document.createElement('div');
-      pair.innerHTML = text;
-      document.body.appendChild(pair);
-    });
+	 clicks.zip(inputValues, function(count, text){
+	   return text + ', ' + count + ';';
+	 }).map(function(x){
+	   console.log(x)
+	   return Sob.fromTimeout(1000).map(function(){return x;})
+	 }).flatMap(function(x){
+	   return x;
+	 }).sub(function(text){
+	   var pair = document.createElement('div');
+	   pair.innerHTML = text;
+	   document.body.appendChild(pair);
+	 });
     
     var timer = Sob.fromInterval(1000);
     timer.sub(function(data){
