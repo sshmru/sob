@@ -37,8 +37,14 @@ var Sob = (function(){
 		return this._subs.length > 0;
 	};
 	
+	
+	
+	
 	Sob.prototype.map = function(fn){
 		var that = this;
+		var cb = function(data){
+			sob.onNext(fn(data, sob._count, that));
+		};
 		var sob = new Sob(
 			function(){
 				that.sub(cb);
@@ -47,10 +53,40 @@ var Sob = (function(){
 				that.unsub(cb);
 			}
 		);
+		return sob;
+	};
+	
+	Sob.prototype.filter = function(fn){
+		var that = this;
 		var cb = function(data){
-			sob.onNext(fn(data));
+			if(fn(data, sob._count, that))
+				sob.onNext(data);
 		};
-		
+		var sob = new Sob(
+			function(){
+				that.sub(cb);
+			},
+			function(){
+				that.unsub(cb);
+			}
+		);
+		return sob;
+	};
+	
+	Sob.prototype.reduce = function(fn, acc){
+		var that = this;
+		var cb = function(data){
+			acc = fn(acc, data, sob._count, that)
+			sob.onNext(acc);
+		};
+		var sob = new Sob(
+			function(){
+				that.sub(cb);
+			},
+			function(){
+				that.unsub(cb);
+			}
+		);
 		return sob;
 	};
 	
@@ -69,9 +105,11 @@ var Sob = (function(){
 				sob.onNext(fn(data));
 			});
 		};
-		
 		return sob;
 	};
+	
+	// Sob.prototype.concatMap = function(fn){
+	// };
 	
 	Sob.prototype.zip = function(other, fn){
 		var that = this;
@@ -106,8 +144,31 @@ var Sob = (function(){
 		return sob;
 	};
 	
+	Sob.prototype.merge = function(other){
+		var that = this;
+		var sob = new Sob(
+			function(){
+				that.sub(cb);
+				other.sub(cb);
+			},
+			function(){
+				that.unsub(cb);
+				other.unsub(cb);
+			}
+		);
+		var cb = function(data){
+			sob.onNext(data);
+		};
+
+		return sob;
+	};
+	
 	Sob.prototype.first = function(){
 		var that = this;
+		var cb = function(data){
+			sob.onNext(data);
+			sob.dispose();
+		};
 		var sob = new Sob(
 			function(){
 				that.sub(cb);
@@ -116,11 +177,46 @@ var Sob = (function(){
 				that.unsub(cb);
 			}
 		);
+		return sob;
+	};
+	
+	Sob.prototype.buffer = function(size){
+		var that = this;
+		var buffer = [];
+		size = size || 0;
 		var cb = function(data){
-			sob.onNext(data);
-			sob.dispose();
+			buffer.push(data);
+			if(buffer.length === size){
+				sob.onNext(Sob.fromArray(buffer.slice()));
+				buffer.shift();
+			}
 		};
-		
+		var sob = new Sob(
+			function(){
+				that.sub(cb);
+			},
+			function(){
+				that.unsub(cb);
+			}
+		);
+		return sob;
+	};
+	
+	Sob.prototype.delay = function(time){
+		var that = this;
+		var cb = function(data){
+			setTimeout(function(){
+				sob.onNext(data);
+			}, time || 0);
+		};
+		var sob = new Sob(
+			function(){
+				that.sub(cb);
+			},
+			function(){
+				that.unsub(cb);
+			}
+		);
 		return sob;
 	};
 	
@@ -193,9 +289,26 @@ var Sob = (function(){
 				clearTimeout(itv);
 			}
 		);
-		
 		return sob;
 	};
+	
+	Sob.fromPromise = function(promise){
+		var itv;
+		var sob = new Sob(
+			function(){
+				promise.then(function(){
+					sob.onNext();
+				}).finally(function(){
+					sob.dispose();
+				});
+			},
+			function(){
+				promise.cancel && promise.cancel();
+			}
+		);
+		return sob;
+	};
+	
 	
 	return Sob;
 })();

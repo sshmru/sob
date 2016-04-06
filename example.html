@@ -16,56 +16,69 @@
   </div>
   <script>
   
-  var btn = document.querySelector('#btn');
-  var inp = document.querySelector('#inp');
-  var out = document.querySelector('#out');
-  var out2 = document.querySelector('#out2');
+  // var btn = document.querySelector('#btn');
+  // var inp = document.querySelector('#inp');
+  // var out = document.querySelector('#out');
+  // var out2 = document.querySelector('#out2');
+  // 
+  // var out3 = document.querySelector('#out3');
+  // var out4 = document.querySelector('#out4');
+  // 
+  // 
+  //   var clickCnt = 0;
+  //   var clicks = Sob.fromDOMEvent(btn, 'click').map(function(){
+  //     return clickCnt++;
+  //   });
+  //   
+  //   
+  //   var inputValues = Sob.fromDOMEvent(inp, 'keydown').map(function(){
+  //     return inp.value;
+  //   });
+  //   
+  // clicks.zip(inputValues, function(count, text){
+  //   return text + ', ' + count + ';';
+  // }).map(function(x){
+  //   console.log(x)
+  //   return Sob.fromTimeout(1000).map(function(){return x;})
+  // }).flatMap(function(x){
+  //   return x;
+  // }).sub(function(text){
+  //   var pair = document.createElement('div');
+  //   pair.innerHTML = text;
+  //   document.body.appendChild(pair);
+  // });
+  //   
+  //   var timer = Sob.fromInterval(1000);
+  //   timer.sub(function(data){
+  //     out2.innerHTML = data;
+  //     if(data >= 10)
+  //       timer.dispose();
+  //   });
+  //   
+  //   var timer2 = timer.map(function(x){return x*2;});
+  //   
+  //   timer2.sub(function(data){
+  //     out3.innerHTML = data;
+  //     if(data >= 3){
+  //       timer2.first().map(function(x){return x*2}).sub(function(data){
+  //         out4.innerHTML = data;
+  //         timer2.dispose();
+  //       })
+  //     }
+  //   });
   
-  var out3 = document.querySelector('#out3');
-  var out4 = document.querySelector('#out4');
-
-
-    var clickCnt = 0;
-    var clicks = Sob.fromDOMEvent(btn, 'click').map(function(){
-      return clickCnt++;
-    });
-    
-    
-    var inputValues = Sob.fromDOMEvent(inp, 'keydown').map(function(){
-      return inp.value;
-    });
-    
-	 clicks.zip(inputValues, function(count, text){
-	   return text + ', ' + count + ';';
-	 }).map(function(x){
-	   console.log(x)
-	   return Sob.fromTimeout(1000).map(function(){return x;})
-	 }).flatMap(function(x){
-	   return x;
-	 }).sub(function(text){
-	   var pair = document.createElement('div');
-	   pair.innerHTML = text;
-	   document.body.appendChild(pair);
-	 });
-    
-    var timer = Sob.fromInterval(1000);
-    timer.sub(function(data){
-      out2.innerHTML = data;
-      if(data >= 10)
-        timer.dispose();
-    });
-    
-    var timer2 = timer.map(function(x){return x*2;});
-    
-    timer2.sub(function(data){
-      out3.innerHTML = data;
-      if(data >= 3){
-        timer2.first().map(function(x){return x*2}).sub(function(data){
-          out4.innerHTML = data;
-          timer2.dispose();
-        })
-      }
-    });
+  // console.log('reduce')
+  // Sob.fromArray([1,2,3,4,5,6,7,8,9,0]).buffer(2).flatMap(function(x){return x}).reduce(function(x,y){ return x+y }, '').sub(function(x){ console.log(x) })
+  // console.log('merge')
+  // Sob.fromArray([1,2,3]).merge(Sob.fromArray([2,3,4])).sub(function(x){console.log(x)})
+  // console.log('filter')
+  // Sob.fromArray([1,2,3]).filter(function(x){return x<2}).sub(function(x){console.log(x)})
+  // console.log('mergeintervals')
+  // var stream1s = Sob.fromInterval(1000).map(function(x){return x + '- 1s'})
+  // var stream2s = Sob.fromInterval(2000).map(function(x){return x + '- 2s'})
+  // stream1s.merge(stream2s).sub(function(x){console.log(x)})
+  // console.log('delay')
+  // Sob.fromInterval(1000).delay(2000).sub(function(x){ console.log(x) })
   </script>
   
 </body>
