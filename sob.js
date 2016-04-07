@@ -37,15 +37,8 @@ var Sob = (function(){
 		return this._subs.length > 0;
 	};
 	
-	
-	
-	
-	Sob.prototype.map = function(fn){
-		var that = this;
-		var cb = function(data){
-			sob.onNext(fn(data, sob._count, that));
-		};
-		var sob = new Sob(
+	var getSobForCb = function(that, cb){
+		return new Sob(
 			function(){
 				that.sub(cb);
 			},
@@ -53,6 +46,15 @@ var Sob = (function(){
 				that.unsub(cb);
 			}
 		);
+	};
+	
+	
+	Sob.prototype.map = function(fn){
+		var that = this;
+		var cb = function(data){
+			sob.onNext(fn(data, sob._count, that));
+		};
+		var sob = getSobForCb(this, cb);
 		return sob;
 	};
 	
@@ -62,49 +64,28 @@ var Sob = (function(){
 			if(fn(data, sob._count, that))
 				sob.onNext(data);
 		};
-		var sob = new Sob(
-			function(){
-				that.sub(cb);
-			},
-			function(){
-				that.unsub(cb);
-			}
-		);
+		var sob = getSobForCb(this, cb);
 		return sob;
 	};
 	
 	Sob.prototype.reduce = function(fn, acc){
 		var that = this;
 		var cb = function(data){
-			acc = fn(acc, data, sob._count, that)
+			acc = fn(acc, data, sob._count, that);
 			sob.onNext(acc);
 		};
-		var sob = new Sob(
-			function(){
-				that.sub(cb);
-			},
-			function(){
-				that.unsub(cb);
-			}
-		);
+		var sob = getSobForCb(this, cb);
 		return sob;
 	};
 	
 	Sob.prototype.flatMap = function(fn){
 		var that = this;
-		var sob = new Sob(
-			function(){
-				that.sub(cb);
-			},
-			function(){
-				that.unsub(cb);
-			}
-		);
 		var cb = function(obs){
 			obs.sub(function(data){
 				sob.onNext(fn(data));
 			});
 		};
+		var sob = getSobForCb(this, cb);
 		return sob;
 	};
 	
@@ -169,14 +150,7 @@ var Sob = (function(){
 			sob.onNext(data);
 			sob.dispose();
 		};
-		var sob = new Sob(
-			function(){
-				that.sub(cb);
-			},
-			function(){
-				that.unsub(cb);
-			}
-		);
+		var sob = getSobForCb(this, cb);
 		return sob;
 	};
 	
@@ -191,14 +165,7 @@ var Sob = (function(){
 				buffer.shift();
 			}
 		};
-		var sob = new Sob(
-			function(){
-				that.sub(cb);
-			},
-			function(){
-				that.unsub(cb);
-			}
-		);
+		var sob = getSobForCb(this, cb);
 		return sob;
 	};
 	
@@ -209,14 +176,7 @@ var Sob = (function(){
 				sob.onNext(data);
 			}, time || 0);
 		};
-		var sob = new Sob(
-			function(){
-				that.sub(cb);
-			},
-			function(){
-				that.unsub(cb);
-			}
-		);
+		var sob = getSobForCb(this, cb);
 		return sob;
 	};
 	
