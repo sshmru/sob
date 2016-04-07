@@ -87,6 +87,21 @@
 		return sob;
 	};
 	
+	
+	Sob.repeat = function(value, times){
+		var sob = new Sob(
+			function(next, error, complete){
+				for(var i = 0; i < times; i++){
+					next(value);
+				}
+				complete();
+			}
+		);
+		
+		return sob;
+	};
+	
+	
 	var getEventSob = function(obj, ev, on, off){
 		var cb = function(){
 			sob.next.apply(sob, Array.prototype.slice.call(arguments));
@@ -166,6 +181,47 @@
 		return sob;
 	};
 	
+	/* wrappers */
+	
+	Sob.fromCallback = function(fn, ctx){
+		return function(){
+			var args = Array.prototype.slice.call(arguments);
+			return new Sob(
+				function(){
+					fn.apply(ctx, args.concat(function(){
+						var innerArgs = Array.prototype.slice.call(arguments);
+							next.apply(ctx, innerArgs);
+					}));
+				}
+			);
+		};
+	};
+	
+	Sob.fromNodeCallback = function(fn, ctx){
+		return function(){
+			var args = Array.prototype.slice.call(arguments);
+			return new Sob(
+				function(){
+					fn.apply(ctx, args.concat(function(err){
+						var innerArgs = Array.prototype.slice.call(arguments, 1);
+							if(!err)
+								next.apply(ctx, innerArgs);
+							else
+								err.apply(ctx, err);
+					}));
+				}
+			);
+		};
+	};
+	
+	Sob.toAsync = function(fn, ctx){
+		return function(){
+			var args = Array.prototype.slice.call(arguments);
+			return Sob.fromTimeout(0).map(function(){
+				return fn.apply(ctx, args);
+			});
+		};
+	};
 	
 	/* methods */
 	
@@ -177,8 +233,6 @@
 		return new Sob(
 			function(next, error, complete){
 				that.sub(n,e,c);
-			},
-			function(){
 			}
 		);
 	};
@@ -313,8 +367,6 @@
 			function(next, error, complete){
 				that.sub(thatObs.onNext, thatObs.onError, thatObs.onComplete);
 				other.sub(otherObs.onNext, otherObs.onError, otherObs.onComplete);
-			},
-			function(){
 			}
 		);
 		
@@ -342,8 +394,6 @@
 			function(){
 				unsubThat = that.sub(obs.onNext, obs.onError, obs.onComplete);
 				unsubOther = other.sub(obs.onNext, obs.onError, obs.onComplete);
-			},
-			function(){
 			}
 		);
 

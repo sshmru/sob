@@ -67,8 +67,8 @@
   //     }
   //   });
   
-  // console.log('reduce')
-  // Sob.fromArray([1,2,3,4,5,6,7,8,9,0]).buffer(2).flatMap(function(x){return x}).reduce(function(x,y){ return x+y }, '').forEach(function(x){ console.log(x) })
+  console.log('reduce')
+  Sob.fromArray([1,2,3,4,5,6,7,8,9,0]).buffer(2).flatMap(function(x){return x}).reduce(function(x,y){ return x+y }, '').forEach(function(x){ console.log(x) })
   console.log('merge')
   Sob.fromArray([1,2,3]).merge(Sob.fromArray([2,3,4])).forEach(function(x){console.log(x)})
   console.log('filter')
