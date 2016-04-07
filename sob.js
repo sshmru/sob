@@ -1,194 +1,70 @@
 (function(){
-	var Sob = function(run, dispose){
+	var Sob = function(run, complete){
+		this._runCallback = run;
+		this._completeCallback = complete;
 		
-		this.run = function(){
-			this.active = true;
-			run && run(this.onNext);
-		}.bind(this);
-		
-		this.dispose = function(){
-			this.active = false;
-			dispose && dispose();
-		}.bind(this);
-		
+		this.active = false;
 		this._count = 0;
 		this._subs = [];
 	};
 	
-	Sob.prototype.onNext = function(){
-		var args = Array.prototype.slice.call(arguments);
-		this._count+=1;
+	Sob.prototype.run = function(){
+		var that = this;
+		this.active = true;
+		this._runCallback && this._runCallback.call(this, this.next, this.error, this.complete);
+	};
+	
+	Sob.prototype.complete = function(){
+		var that = this;
+		this.active = false;
+		this._completeCallback && this._completeCallback.call(this);
+		
 		this._subs.forEach(function(sub){
-			sub.apply(this, args);
+			sub.onComplete.apply(this, args);
 		});
 	};
 	
-	Sob.prototype.sub = function(fn){
-		this._subs.push(fn);
+	Sob.prototype.next = function(){
+		var args = Array.prototype.slice.call(arguments);
+		this._count += 1;
+		this._subs.forEach(function(sub){
+			sub.onNext.apply(this, args);
+		});
+	};
+	
+	Sob.prototype.error = function(){
+		var args = Array.prototype.slice.call(arguments);
+		this._count += 1;
+		this._subs.forEach(function(sub){
+			sub.onError.apply(this, args);
+		});
+	};
+	
+	Sob.prototype.sub = function(obs){
+		this._subs.push(obs);
 		if(!this.active)
 			this.run();
 	};
 	
-	Sob.prototype.unsub = function(fn){
-		this._subs.splice(this._subs.indexOf(fn), 1);
+	Sob.prototype.unsub = function(obs){
+		this._subs.splice(this._subs.indexOf(obs), 1);
 	};
 	
-	Sob.prototype.hasSubs = function(fn){
+	Sob.prototype.hasSubs = function(){
 		return this._subs.length > 0;
 	};
 	
-	var getSobForCb = function(that, cb){
-		return new Sob(
-			function(){
-				that.sub(cb);
-			},
-			function(){
-				that.unsub(cb);
-			}
-		);
-	};
 	
-	
-	Sob.prototype.map = function(fn){
-		var that = this;
-		var cb = function(data){
-			sob.onNext(fn(data, sob._count, that));
-		};
-		var sob = getSobForCb(this, cb);
-		return sob;
-	};
-	
-	Sob.prototype.filter = function(fn){
-		var that = this;
-		var cb = function(data){
-			if(fn(data, sob._count, that))
-				sob.onNext(data);
-		};
-		var sob = getSobForCb(this, cb);
-		return sob;
-	};
-	
-	Sob.prototype.reduce = function(fn, acc){
-		var that = this;
-		var cb = function(data){
-			acc = fn(acc, data, sob._count, that);
-			sob.onNext(acc);
-		};
-		var sob = getSobForCb(this, cb);
-		return sob;
-	};
-	
-	Sob.prototype.flatMap = function(fn){
-		var that = this;
-		var cb = function(obs){
-			obs.sub(function(data){
-				sob.onNext(fn(data));
-			});
-		};
-		var sob = getSobForCb(this, cb);
-		return sob;
-	};
-	
-	// Sob.prototype.concatMap = function(fn){
-	// };
-	
-	Sob.prototype.zip = function(other, fn){
-		var that = this;
-		var sob = new Sob(
-			function(){
-				that.sub(cb1);
-				other.sub(cb2);
-			},
-			function(){
-				that.unsub(cb1);
-				other.unsub(cb2);
-			}
-		);
-		
-		var thatVals = [];
-		var otherVals = [];
-		
-		var onNext = function(){
-			if(thatVals.length && otherVals.length)
-			sob.onNext( fn(thatVals.shift(), otherVals.shift()) );
-		};
-		
-		var cb1 = function(data){
-			thatVals.push(data);
-			onNext();
-		};
-		var cb2 = function(data){
-			otherVals.push(data);
-			onNext();
-		};
-		
-		return sob;
-	};
-	
-	Sob.prototype.merge = function(other){
-		var that = this;
-		var sob = new Sob(
-			function(){
-				that.sub(cb);
-				other.sub(cb);
-			},
-			function(){
-				that.unsub(cb);
-				other.unsub(cb);
-			}
-		);
-		var cb = function(data){
-			sob.onNext(data);
-		};
-
-		return sob;
-	};
-	
-	Sob.prototype.first = function(){
-		var that = this;
-		var cb = function(data){
-			sob.onNext(data);
-			sob.dispose();
-		};
-		var sob = getSobForCb(this, cb);
-		return sob;
-	};
-	
-	Sob.prototype.buffer = function(size){
-		var that = this;
-		var buffer = [];
-		size = size || 0;
-		var cb = function(data){
-			buffer.push(data);
-			if(buffer.length === size){
-				sob.onNext(Sob.fromArray(buffer.slice()));
-				buffer.shift();
-			}
-		};
-		var sob = getSobForCb(this, cb);
-		return sob;
-	};
-	
-	Sob.prototype.delay = function(time){
-		var that = this;
-		var cb = function(data){
-			setTimeout(function(){
-				sob.onNext(data);
-			}, time || 0);
-		};
-		var sob = getSobForCb(this, cb);
-		return sob;
-	};
+	/*factory functions*/
 	
 	
 	Sob.fromArray = function(arr){
 		var sob = new Sob(
-			function(){
+			function(next, error, complete){
 				arr.forEach(function(item){
-					sob.onNext(item);
+					next(item);
 				});
-			},
-			function(){
+				complete();
 			}
 		);
 		
@@ -196,17 +72,17 @@
 	};
 	
 	var getEventSob = function(obj, ev, on, off){
+		var cb = function(){
+			sob.next.apply(sob, Array.prototype.slice.call(arguments));
+		};
 		var sob = new Sob(
-			function(){
+			function(next, error, complete){
 				obj[on](ev, cb);
 			},
 			function(){
 				obj[off](ev, cb);
 			}
 		);
-		var cb = function(){
-			sob.onNext.apply(sob, Array.prototype.slice.call(arguments));
-		};
 		
 		return sob;
 	};
@@ -223,9 +99,9 @@
 	Sob.fromInterval = function(time){
 		var itv;
 		var sob = new Sob(
-			function(){
+			function(next, error, complete){
 				itv = setInterval(function(){
-					sob.onNext(sob._count);
+					next(sob._count);
 				}, time);
 			},
 			function(){
@@ -239,35 +115,285 @@
 	Sob.fromTimeout = function(time){
 		var itv;
 		var sob = new Sob(
-			function(){
+			function(next, error, complete){
 				itv = setTimeout(function(){
-					sob.onNext(sob._count);
-					sob.dispose();
+					next(sob._count);
+					complete();
 				}, time);
 			},
 			function(){
 				clearTimeout(itv);
 			}
 		);
+		
 		return sob;
 	};
 	
 	Sob.fromPromise = function(promise){
 		var itv;
 		var sob = new Sob(
-			function(){
+			function(next, error, complete){
 				promise.then(function(){
-					sob.onNext();
-				}).finally(function(){
-					sob.dispose();
+					next.apply(sob, Array.prototype.slice.call(arguments));
+				}).catch(function(){
+					error.apply(sob, Array.prototype.slice.call(arguments));
+				})
+				promise.finally && promise.finally(function(){
+					complere.apply(sob, Array.prototype.slice.call(arguments));
 				});
 			},
 			function(){
 				promise.cancel && promise.cancel();
 			}
 		);
+		
 		return sob;
 	};
+	
+	
+	/* methods */
+	
+	
+	var getSobForCb = function(that, obs){
+		return new Sob(
+			function(next, error, complete){
+				that.sub(obs);
+			},
+			function(){
+				that.unsub(obs);
+			}
+		);
+	};
+	
+	Sob.prototype.map = function(fn){
+		var that = this;
+		var obs = {
+			onNext: function(data){
+				sob.next(fn(data, sob._count, that));
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				sob.Complete();
+			}
+		};
+		
+		var sob = getSobForCb(this, obs);
+		return sob;
+	};
+	
+	Sob.prototype.filter = function(fn){
+		var that = this;
+		var obs = {
+			onNext: function(data){
+				if(fn(data, sob._count, that))
+					sob.next(data);
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				sob.Complete();
+			}
+		};
+		
+		var sob = getSobForCb(this, obs);
+		return sob;
+	};
+	
+	Sob.prototype.reduce = function(fn, acc){
+		var that = this;
+
+		var obs = {
+			onNext: function(data){
+				acc = fn(acc, data, sob._count, that);
+				sob.next(acc);
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				sob.Complete();
+			}
+		};
+		
+		var sob = getSobForCb(this, obs);
+		return sob;
+	};
+	
+	Sob.prototype.flatMap = function(fn){
+		var that = this;
+		
+		var obs = {
+			onNext: function(innerObs){
+				innerObs.sub({
+					onNext: function(data){
+						sob.next(fn(data));
+					},
+					onError: function(data){
+						sob.error(fn(data));
+					},
+					onComplete: function(){
+						//////////////////////////////////////////////////////////////
+					}
+				});
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				sob.Complete();
+			}
+		};
+		
+		var sob = getSobForCb(this, obs);
+		return sob;
+	};
+	
+	// Sob.prototype.concatMap = function(fn){
+	// };
+	
+	Sob.prototype.zip = function(other, fn){
+		var that = this;
+		var thatVals = [];
+		var otherVals = [];
+		
+		var onNext = function(){
+			if(thatVals.length && otherVals.length)
+				sob.next( fn(thatVals.shift(), otherVals.shift()) );
+		};
+		
+		var thatObs = {
+			onNext: function(data){
+				thatVals.push(data);
+				onNext();
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				sob.onComplete();
+			}
+		};
+		var otherObs = {
+			onNext: function(data){
+				otherVals.push(data);
+				onNext();
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				sob.onComplete();
+			}
+		};
+		
+		var sob = new Sob(
+			function(next, error, complete){
+				that.sub(thatObs);
+				other.sub(otherObs);
+			},
+			function(){
+				that.unsub(thatObs);
+				other.unsub(otherObs);
+			}
+		);
+		
+		return sob;
+	};
+	
+	Sob.prototype.merge = function(other){
+		var that = this;
+		var obs = {
+			onNext: function(data){
+				sob.next(data);
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				///////////////////////////////////////////////////////////////////
+			}
+		};
+		
+		var sob = new Sob(
+			function(){
+				that.sub(obs);
+				other.sub(obs);
+			},
+			function(){
+				that.unsub(obs);
+				other.unsub(obs);
+			}
+		);
+
+		return sob;
+	};
+	
+	Sob.prototype.first = function(){
+		var obs = {
+			onNext: function(data){
+				sob.next(data);
+				sob.complete();
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				sob.complete();
+			}
+		};
+		
+		var sob = getSobForCb(this, sob);
+		return sob;
+	};
+	
+	Sob.prototype.buffer = function(size){
+		var that = this;
+		var buffer = [];
+		size = size || 0;
+		var obs = {
+			onNext: function(data){
+				buffer.push(data);
+				if(buffer.length === size){
+					sob.next(Sob.fromArray(buffer.slice()));
+					buffer.shift();
+				}
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				sob.complete();
+			}
+		};
+		
+		var sob = getSobForCb(this, obs);
+		return sob;
+	};
+	
+	Sob.prototype.delay = function(time){
+		var that = this;
+		var obs = {
+			onNext: function(data){
+				setTimeout(function(){
+					sob.next(data);
+				}, time || 0);
+			},
+			onError: function(err){
+				sob.error(err);
+			},
+			onComplete: function(){
+				sob.complete();
+			}
+		};
+		
+		var sob = getSobForCb(this, obs);
+		return sob;
+	};
+	
+
 	
 	if(typeof module!== 'undefined')
 		module.exports = Sob;
