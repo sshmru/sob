@@ -1,4 +1,4 @@
-var Sob = (function(){
+(function(){
 	var Sob = function(run, dispose){
 		
 		this.run = function(){
@@ -269,6 +269,11 @@ var Sob = (function(){
 		return sob;
 	};
 	
+	if(typeof module!== 'undefined')
+		module.exports = Sob;
+	else if(typeof requirejs !== 'undefined')
+		define('Sob', [], function(){ return Sob;});
+	else 
+		window.Sob = Sob;
 	
-	return Sob;
 })();
