@@ -6,6 +6,9 @@
 		this.active = false;
 		this._count = 0;
 		this._subs = [];
+		this.next = this.next.bind(this)
+		this.error = this.error.bind(this)
+		this.complete = this.complete.bind(this)
 	};
 	
 	Sob.prototype.run = function(){
@@ -15,6 +18,7 @@
 	};
 	
 	Sob.prototype.complete = function(){
+		var args = Array.prototype.slice.call(arguments);
 		var that = this;
 		this.active = false;
 		this._completeCallback && this._completeCallback.call(this);
@@ -153,6 +157,17 @@
 	
 	/* methods */
 	
+	Sob.prototype.forEach = function(onNext, onError, onComplete){
+		var that = this;
+		var obs = {
+			onNext: onNext ? onNext.bind(this) : function(){},
+			onError: onError? onError.bind(this) : function(){},
+			onComplete: onComplete? onComplete.bind(this) : function(){},
+		};
+		
+		this.sub(obs);
+	};
+	
 	
 	var getSobForCb = function(that, obs){
 		return new Sob(
@@ -175,7 +190,7 @@
 				sob.error(err);
 			},
 			onComplete: function(){
-				sob.Complete();
+				sob.complete();
 			}
 		};
 		
@@ -194,7 +209,7 @@
 				sob.error(err);
 			},
 			onComplete: function(){
-				sob.Complete();
+				sob.complete();
 			}
 		};
 		
@@ -214,7 +229,7 @@
 				sob.error(err);
 			},
 			onComplete: function(){
-				sob.Complete();
+				sob.complete();
 			}
 		};
 		
@@ -224,18 +239,22 @@
 	
 	Sob.prototype.flatMap = function(fn){
 		var that = this;
-		
+		var sourceCompleted = false;
+		var unfinishedCount = 0;
 		var obs = {
 			onNext: function(innerObs){
 				innerObs.sub({
 					onNext: function(data){
 						sob.next(fn(data));
+						unfinishedCount += 1;
 					},
 					onError: function(data){
 						sob.error(fn(data));
 					},
 					onComplete: function(){
-						//////////////////////////////////////////////////////////////
+						unfinishedCount -= 1;
+						if(sourceCompleted && unfinishedCount === 0)
+							sob.complete();
 					}
 				});
 			},
@@ -243,7 +262,9 @@
 				sob.error(err);
 			},
 			onComplete: function(){
-				sob.Complete();
+				sourceCompleted = true;
+				if(unfinishedCount === 0)
+					sob.complete();
 			}
 		};
 		
@@ -273,7 +294,7 @@
 				sob.error(err);
 			},
 			onComplete: function(){
-				sob.onComplete();
+				sob.complete();
 			}
 		};
 		var otherObs = {
@@ -285,7 +306,7 @@
 				sob.error(err);
 			},
 			onComplete: function(){
-				sob.onComplete();
+				sob.complete();
 			}
 		};
 		
@@ -305,6 +326,7 @@
 	
 	Sob.prototype.merge = function(other){
 		var that = this;
+		var completeCount = 0;
 		var obs = {
 			onNext: function(data){
 				sob.next(data);
@@ -313,7 +335,9 @@
 				sob.error(err);
 			},
 			onComplete: function(){
-				///////////////////////////////////////////////////////////////////
+				completeCount +=1;
+				if(completeCount === 2)
+					sob.complete();
 			}
 		};
 		
@@ -375,16 +399,20 @@
 	
 	Sob.prototype.delay = function(time){
 		var that = this;
+		var completed = false;
 		var obs = {
 			onNext: function(data){
 				setTimeout(function(){
 					sob.next(data);
+					if(completed)
+						sob.complete();
 				}, time || 0);
 			},
 			onError: function(err){
 				sob.error(err);
 			},
 			onComplete: function(){
+				completed = true;
 				sob.complete();
 			}
 		};

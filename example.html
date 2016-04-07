@@ -68,17 +68,18 @@
   //   });
   
   // console.log('reduce')
-  // Sob.fromArray([1,2,3,4,5,6,7,8,9,0]).buffer(2).flatMap(function(x){return x}).reduce(function(x,y){ return x+y }, '').sub(function(x){ console.log(x) })
+  // Sob.fromArray([1,2,3,4,5,6,7,8,9,0]).buffer(2).flatMap(function(x){return x}).reduce(function(x,y){ return x+y }, '').forEach(function(x){ console.log(x) })
   // console.log('merge')
-  // Sob.fromArray([1,2,3]).merge(Sob.fromArray([2,3,4])).sub(function(x){console.log(x)})
+  // Sob.fromArray([1,2,3]).merge(Sob.fromArray([2,3,4])).forEach(function(x){console.log(x)})
   // console.log('filter')
-  // Sob.fromArray([1,2,3]).filter(function(x){return x<2}).sub(function(x){console.log(x)})
+  // Sob.fromArray([1,5,'asd', 2,3]).filter(function(x){return x>2}).forEach(function(x){console.log(x)})
   // console.log('mergeintervals')
-  // var stream1s = Sob.fromInterval(1000).map(function(x){return x + '- 1s'})
-  // var stream2s = Sob.fromInterval(2000).map(function(x){return x + '- 2s'})
-  // stream1s.merge(stream2s).sub(function(x){console.log(x)})
+  // var stream1s = Sob.fromInterval(1000).map(function(x){return '**  - ' + x})
+  // var stream2s = Sob.fromInterval(1500).map(function(x){return '*** - ' + x})
+  // stream1s.merge(stream2s).forEach(function(x){console.log(x)})
   // console.log('delay')
-  // Sob.fromInterval(1000).delay(2000).sub(function(x){ console.log(x) })
+  // Sob.fromInterval(1000).delay(2000).forEach(function(x){ console.log(x) })
+  // Sob.fromTimeout(2999).forEach(function(){console.log('before')})
   </script>
   
 </body>
