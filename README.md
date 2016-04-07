@@ -7,6 +7,7 @@ i am not entirely sure if my naming of streams or observables is even proper to 
 ##ok so what is this
 this is beginning of minimalistic library working on streams, similar to rxjs
 
+#need update
 
 ##k so how do i even
 for now you can create a streams with: fromDomEvent(node, eventName), fromInterval(miliseconds),  fromInterval(miliseconds), fromArray(array)

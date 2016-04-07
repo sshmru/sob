@@ -44,10 +44,22 @@
 		});
 	};
 	
-	Sob.prototype.sub = function(obs){
+	Sob.prototype._sub = function(obs){
 		this._subs.push(obs);
 		if(!this.active)
 			this.run();
+	};
+	
+	Sob.prototype.sub = function(onNext, onError, onComplete){
+		var that = this;
+		var obs = {
+			onNext: onNext ? onNext.bind(this) : function(){},
+			onError: onError? onError.bind(this) : function(){},
+			onComplete: onComplete? onComplete.bind(this) : function(){},
+		};
+		
+		this._sub(obs);
+		return this.unsub.bind(this, obs);
 	};
 	
 	Sob.prototype.unsub = function(obs){
@@ -141,7 +153,7 @@
 					next.apply(sob, Array.prototype.slice.call(arguments));
 				}).catch(function(){
 					error.apply(sob, Array.prototype.slice.call(arguments));
-				})
+				});
 				promise.finally && promise.finally(function(){
 					complere.apply(sob, Array.prototype.slice.call(arguments));
 				});
@@ -157,83 +169,71 @@
 	
 	/* methods */
 	
-	Sob.prototype.forEach = function(onNext, onError, onComplete){
+	Sob.prototype.forEach = Sob.prototype.sub;
+	
+	
+	Sob.prototype.connectObserver = function(n,e,c){
 		var that = this;
-		var obs = {
-			onNext: onNext ? onNext.bind(this) : function(){},
-			onError: onError? onError.bind(this) : function(){},
-			onComplete: onComplete? onComplete.bind(this) : function(){},
-		};
-		
-		this.sub(obs);
-	};
-	
-	
-	var getSobForCb = function(that, obs){
 		return new Sob(
 			function(next, error, complete){
-				that.sub(obs);
+				that.sub(n,e,c);
 			},
 			function(){
-				that.unsub(obs);
 			}
 		);
 	};
 	
 	Sob.prototype.map = function(fn){
 		var that = this;
-		var obs = {
-			onNext: function(data){
+		var sob = this.connectObserver(
+			function(data){
 				sob.next(fn(data, sob._count, that));
 			},
-			onError: function(err){
+			function(err){
 				sob.error(err);
 			},
-			onComplete: function(){
+			function(){
 				sob.complete();
 			}
-		};
+		);
 		
-		var sob = getSobForCb(this, obs);
 		return sob;
 	};
 	
 	Sob.prototype.filter = function(fn){
 		var that = this;
-		var obs = {
-			onNext: function(data){
+		var sob = this.connectObserver(
+			function(data){
 				if(fn(data, sob._count, that))
 					sob.next(data);
 			},
-			onError: function(err){
+			function(err){
 				sob.error(err);
 			},
-			onComplete: function(){
+			function(){
 				sob.complete();
 			}
-		};
+		);
 		
-		var sob = getSobForCb(this, obs);
 		return sob;
 	};
 	
 	Sob.prototype.reduce = function(fn, acc){
 		var that = this;
 
-		var obs = {
-			onNext: function(data){
+		var sob = this.connectObserver(
+			function(data){
 				acc = fn(acc, data, sob._count, that);
 				sob.next(acc);
 			},
-			onError: function(err){
+			function(err){
 				sob.error(err);
 			},
-			onComplete: function(){
+			function(){
 				sob.complete();
 			}
-		};
+		);
 		
-		var sob = getSobForCb(this, obs);
 		return sob;
 	};
 	
@@ -241,34 +241,33 @@
 		var that = this;
 		var sourceCompleted = false;
 		var unfinishedCount = 0;
-		var obs = {
-			onNext: function(innerObs){
-				innerObs.sub({
-					onNext: function(data){
+		var sob = this.connectObserver(
+			function(innerObs){
+				innerObs.sub(
+					function(data){
 						sob.next(fn(data));
 						unfinishedCount += 1;
 					},
-					onError: function(data){
+					function(data){
 						sob.error(fn(data));
 					},
-					onComplete: function(){
+					function(){
 						unfinishedCount -= 1;
 						if(sourceCompleted && unfinishedCount === 0)
 							sob.complete();
 					}
-				});
+				);
 			},
-			onError: function(err){
+			function(err){
 				sob.error(err);
 			},
-			onComplete: function(){
+			function(){
 				sourceCompleted = true;
 				if(unfinishedCount === 0)
 					sob.complete();
 			}
-		};
+		);
 		
-		var sob = getSobForCb(this, obs);
 		return sob;
 	};
 	
@@ -312,12 +311,10 @@
 		
 		var sob = new Sob(
 			function(next, error, complete){
-				that.sub(thatObs);
-				other.sub(otherObs);
+				that.sub(thatObs.onNext, thatObs.onError, thatObs.onComplete);
+				other.sub(otherObs.onNext, otherObs.onError, otherObs.onComplete);
 			},
 			function(){
-				that.unsub(thatObs);
-				other.unsub(otherObs);
 			}
 		);
 		
@@ -343,12 +340,10 @@
 		
 		var sob = new Sob(
 			function(){
-				that.sub(obs);
-				other.sub(obs);
+				unsubThat = that.sub(obs.onNext, obs.onError, obs.onComplete);
+				unsubOther = other.sub(obs.onNext, obs.onError, obs.onComplete);
 			},
 			function(){
-				that.unsub(obs);
-				other.unsub(obs);
 			}
 		);
 
@@ -356,20 +351,19 @@
 	};
 	
 	Sob.prototype.first = function(){
-		var obs = {
-			onNext: function(data){
+		var sob = this.connectObserver(
+			function(data){
 				sob.next(data);
 				sob.complete();
 			},
-			onError: function(err){
+			function(err){
 				sob.error(err);
 			},
-			onComplete: function(){
+			function(){
 				sob.complete();
 			}
-		};
+		);
 		
-		var sob = getSobForCb(this, sob);
 		return sob;
 	};
 	
@@ -377,47 +371,45 @@
 		var that = this;
 		var buffer = [];
 		size = size || 0;
-		var obs = {
-			onNext: function(data){
+		var sob = this.connectObserver(
+			function(data){
 				buffer.push(data);
 				if(buffer.length === size){
 					sob.next(Sob.fromArray(buffer.slice()));
 					buffer.shift();
 				}
 			},
-			onError: function(err){
+			function(err){
 				sob.error(err);
 			},
-			onComplete: function(){
+			function(){
 				sob.complete();
 			}
-		};
+		);
 		
-		var sob = getSobForCb(this, obs);
 		return sob;
 	};
 	
 	Sob.prototype.delay = function(time){
 		var that = this;
 		var completed = false;
-		var obs = {
-			onNext: function(data){
+		var sob = this.connectObserver(
+			function(data){
 				setTimeout(function(){
 					sob.next(data);
 					if(completed)
 						sob.complete();
 				}, time || 0);
 			},
-			onError: function(err){
+			function(err){
 				sob.error(err);
 			},
-			onComplete: function(){
+			function(){
 				completed = true;
 				sob.complete();
 			}
-		};
+		);
 		
-		var sob = getSobForCb(this, obs);
 		return sob;
 	};
 	

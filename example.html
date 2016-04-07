@@ -69,17 +69,47 @@
   
   // console.log('reduce')
   // Sob.fromArray([1,2,3,4,5,6,7,8,9,0]).buffer(2).flatMap(function(x){return x}).reduce(function(x,y){ return x+y }, '').forEach(function(x){ console.log(x) })
-  // console.log('merge')
-  // Sob.fromArray([1,2,3]).merge(Sob.fromArray([2,3,4])).forEach(function(x){console.log(x)})
-  // console.log('filter')
-  // Sob.fromArray([1,5,'asd', 2,3]).filter(function(x){return x>2}).forEach(function(x){console.log(x)})
-  // console.log('mergeintervals')
-  // var stream1s = Sob.fromInterval(1000).map(function(x){return '**  - ' + x})
-  // var stream2s = Sob.fromInterval(1500).map(function(x){return '*** - ' + x})
-  // stream1s.merge(stream2s).forEach(function(x){console.log(x)})
-  // console.log('delay')
-  // Sob.fromInterval(1000).delay(2000).forEach(function(x){ console.log(x) })
-  // Sob.fromTimeout(2999).forEach(function(){console.log('before')})
+  console.log('merge')
+  Sob.fromArray([1,2,3]).merge(Sob.fromArray([2,3,4])).forEach(function(x){console.log(x)})
+  console.log('filter')
+  Sob.fromArray([1,5,'asd', 2,3]).filter(function(x){return x>2}).forEach(function(x){console.log(x)})
+  console.log('mergeintervals')
+  var stream1s = Sob.fromInterval(1000).map(function(x){return '**  - ' + x})
+  var stream2s = Sob.fromInterval(1500).map(function(x){return '*** - ' + x})
+  stream1s.merge(stream2s).forEach(function(x){console.log(x)})
+  console.log('delay')
+  Sob.fromInterval(1000).delay(2000).forEach(function(x){ console.log(x) })
+  Sob.fromTimeout(2999).forEach(function(){console.log('before')})
+  
+  // console.log('reduce')
+  // var stream3 = Sob.fromInterval(500).map(function(x){console.log('passing'); return x})
+  // stream3.sub(
+  //  function(x){
+  //   console.log(x)
+  //   if(x>5){
+  // 	  stream3.complete();
+  // 	  stream3.sub(
+  // 		  function(x){
+  // 			  console.log(x)
+  // 			  if(x>10)
+  // 			  stream3.complete();
+  // 		  },
+  // 		  function(){
+  // 			  
+  // 		  },
+  // 		  function(){
+  // 			  console.log('complete2')
+  // 		  }
+  // 	  ) 
+  //   }
+  //  },
+  //  function(){
+  //   
+  //  },
+  //  function(){
+  //   console.log('complete1')
+  //  }
+  // )
   </script>
   
 </body>
