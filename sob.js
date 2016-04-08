@@ -187,7 +187,7 @@
 		return function(){
 			var args = Array.prototype.slice.call(arguments);
 			return new Sob(
-				function(){
+				function(next, error, complete){
 					fn.apply(ctx, args.concat(function(){
 						var innerArgs = Array.prototype.slice.call(arguments);
 							next.apply(ctx, innerArgs);
@@ -201,13 +201,13 @@
 		return function(){
 			var args = Array.prototype.slice.call(arguments);
 			return new Sob(
-				function(){
+				function(next, error, complete){
 					fn.apply(ctx, args.concat(function(err){
 						var innerArgs = Array.prototype.slice.call(arguments, 1);
 							if(!err)
 								next.apply(ctx, innerArgs);
 							else
-								err.apply(ctx, err);
+								error.apply(ctx, err);
 					}));
 				}
 			);
