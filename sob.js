@@ -6,9 +6,9 @@
 		this.active = false;
 		this._count = 0;
 		this._subs = [];
-		this.next = this.next.bind(this)
-		this.error = this.error.bind(this)
-		this.complete = this.complete.bind(this)
+		this.next = this.next.bind(this);
+		this.error = this.error.bind(this);
+		this.complete = this.complete.bind(this);
 	};
 	
 	Sob.prototype.run = function(){
@@ -26,6 +26,7 @@
 		this._subs.forEach(function(sub){
 			sub.onComplete.apply(this, args);
 		});
+		this._subs.length = 0;
 	};
 	
 	Sob.prototype.next = function(){
@@ -48,6 +49,8 @@
 		this._subs.push(obs);
 		if(!this.active)
 			this.run();
+			
+		return this.unsub.bind(this, obs);
 	};
 	
 	Sob.prototype.sub = function(onNext, onError, onComplete){
@@ -58,8 +61,7 @@
 			onComplete: onComplete? onComplete.bind(this) : function(){},
 		};
 		
-		this._sub(obs);
-		return this.unsub.bind(this, obs);
+		return this._sub(obs);
 	};
 	
 	Sob.prototype.unsub = function(obs){
@@ -373,6 +375,11 @@
 		return sob;
 	};
 	
+	Sob.zip = function(that, other,fn){
+		return that.zip(other, fn);
+	};
+	
+	
 	Sob.prototype.merge = function(other){
 		var that = this;
 		var completeCount = 0;
@@ -392,13 +399,18 @@
 		
 		var sob = new Sob(
 			function(){
-				unsubThat = that.sub(obs.onNext, obs.onError, obs.onComplete);
-				unsubOther = other.sub(obs.onNext, obs.onError, obs.onComplete);
+				that.sub(obs.onNext, obs.onError, obs.onComplete);
+				other.sub(obs.onNext, obs.onError, obs.onComplete);
 			}
 		);
 
 		return sob;
 	};
+	
+	Sob.merge = function(that, other,fn){
+		return that.merge(other, fn);
+	};
+	
 	
 	Sob.prototype.first = function(){
 		var sob = this.connectObserver(
