@@ -1,7 +1,6 @@
 (function(){
 	var Sob = function(run, complete){
 		this._runCallback = run;
-		this._completeCallback = complete;
 		
 		this.active = false;
 		this._count = 0;
@@ -14,7 +13,8 @@
 	Sob.prototype.run = function(){
 		var that = this;
 		this.active = true;
-		this._runCallback && this._runCallback.call(this, this.next, this.error, this.complete);
+		if(this._runCallback)
+			this._completeCallback = this._runCallback.call(this, this.next, this.error, this.complete);
 	};
 	
 	Sob.prototype.complete = function(){
@@ -111,9 +111,10 @@
 		var sob = new Sob(
 			function(next, error, complete){
 				obj[on](ev, cb);
-			},
-			function(){
-				obj[off](ev, cb);
+				
+				return function(){
+					obj[off](ev, cb);
+				};
 			}
 		);
 		
@@ -130,15 +131,14 @@
 	};
 	
 	Sob.fromInterval = function(time){
-		var itv;
 		var sob = new Sob(
 			function(next, error, complete){
-				itv = setInterval(function(){
+				var itv = setInterval(function(){
 					next(sob._count);
 				}, time);
-			},
-			function(){
-				clearInterval(itv);
+				return function(){
+					clearInterval(itv);
+				};
 			}
 		);
 		
@@ -149,13 +149,13 @@
 		var itv;
 		var sob = new Sob(
 			function(next, error, complete){
-				itv = setTimeout(function(){
+				var timer = setTimeout(function(){
 					next(sob._count);
 					complete();
 				}, time);
-			},
-			function(){
-				clearTimeout(itv);
+				return function(){
+					clearTimeout(timer);
+				};
 			}
 		);
 		
@@ -174,9 +174,9 @@
 				promise.finally && promise.finally(function(){
 					complere.apply(sob, Array.prototype.slice.call(arguments));
 				});
-			},
-			function(){
-				promise.cancel && promise.cancel();
+				return function(){
+					promise.cancel && promise.cancel();
+				};
 			}
 		);
 		
