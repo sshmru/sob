@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
   <title>JS Bin</title>
-  <script src="sob.js"></script>
+  <script src="../dist/sob.js"></script>
 </head>
 <body>
   <button id="btn">button</button>
@@ -15,26 +15,26 @@
     <span id="out4"></span>
   </div>
   <script>
-  
+
   // var btn = document.querySelector('#btn');
   // var inp = document.querySelector('#inp');
   // var out = document.querySelector('#out');
   // var out2 = document.querySelector('#out2');
-  // 
+  //
   // var out3 = document.querySelector('#out3');
   // var out4 = document.querySelector('#out4');
-  // 
-  // 
+  //
+  //
   //   var clickCnt = 0;
   //   var clicks = Sob.fromDOMEvent(btn, 'click').map(function(){
   //     return clickCnt++;
   //   });
-  //   
-  //   
+  //
+  //
   //   var inputValues = Sob.fromDOMEvent(inp, 'keydown').map(function(){
   //     return inp.value;
   //   });
-  //   
+  //
   // clicks.zip(inputValues, function(count, text){
   //   return text + ', ' + count + ';';
   // }).map(function(x){
@@ -47,16 +47,16 @@
   //   pair.innerHTML = text;
   //   document.body.appendChild(pair);
   // });
-  //   
+  //
   //   var timer = Sob.fromInterval(1000);
   //   timer.sub(function(data){
   //     out2.innerHTML = data;
   //     if(data >= 10)
   //       timer.dispose();
   //   });
-  //   
+  //
   //   var timer2 = timer.map(function(x){return x*2;});
-  //   
+  //
   //   timer2.sub(function(data){
   //     out3.innerHTML = data;
   //     if(data >= 3){
@@ -66,7 +66,7 @@
   //       })
   //     }
   //   });
-  
+
   console.log('reduce')
   Sob.fromArray([1,2,3,4,5,6,7,8,9,0]).buffer(2).flatMap(function(x){return x}).reduce(function(x,y){ return x+y }, '').forEach(function(x){ console.log(x) })
   console.log('merge')
@@ -80,7 +80,7 @@
   console.log('delay')
   Sob.fromInterval(1000).delay(2000).forEach(function(x){ console.log(x) })
   Sob.fromTimeout(2999).forEach(function(){console.log('before')})
-  
+
   // console.log('reduce')
   // var stream3 = Sob.fromInterval(500).map(function(x){console.log('passing'); return x})
   // stream3.sub(
@@ -95,22 +95,22 @@
   // 			  stream3.complete();
   // 		  },
   // 		  function(){
-  // 			  
+  //
   // 		  },
   // 		  function(){
   // 			  console.log('complete2')
   // 		  }
-  // 	  ) 
+  // 	  )
   //   }
   //  },
   //  function(){
-  //   
+  //
   //  },
   //  function(){
   //   console.log('complete1')
   //  }
   // )
   </script>
-  
+
 </body>
 </html>
