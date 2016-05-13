@@ -7,7 +7,8 @@
     "start": "firefox example.html",
     "build": "node_modules/.bin/browserify -o dist/sob.js -e ./src/index.js -s Sob",
     "uglify": "node_modules/.bin/uglifyjs dist/sob.js -c -m -o dist/sob.min.js --source-map dist/sob.min.map",
-    "build-min": "npm run build && npm run uglify"
+    "build-min": "npm run build && npm run uglify",
+    "test": "mocha tests/"
   },
   "repository": {
     "type": "git",
@@ -19,11 +20,12 @@
     "url": "https://github.com/sshmru/sob/issues"
   },
   "homepage": "https://github.com/sshmru/sob#readme",
-  "dependencies": {
+  "devDependencies": {
     "browserify": "^13.0.1",
+    "chai": "^3.5.0",
+    "mocha": "^2.4.5",
     "uglifyjs": "^2.4.10"
   },
-  "devDependencies": {},
   "keywords": [
     "observable",
     "frp"
