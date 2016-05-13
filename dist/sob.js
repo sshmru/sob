@@ -83,7 +83,7 @@ Sob.merge = function(that, other,fn){
 };
 
 },{"./core.js":2}],2:[function(require,module,exports){
-var Sob = function(run, complete){
+var Sob = function(run){
   this._runCallback = run;
 
   this.active = false;
@@ -98,7 +98,7 @@ Sob.prototype.run = function(){
   var that = this;
   this.active = true;
   if(this._runCallback)
-  this._completeCallback = this._runCallback.call(this, this.next, this.error, this.complete);
+    this._completeCallback = this._runCallback.call(this, this.next, this.error, this.complete);
 };
 
 Sob.prototype.complete = function(){
@@ -132,7 +132,7 @@ Sob.prototype.error = function(){
 Sob.prototype._sub = function(obs){
   this._subs.push(obs);
   if(!this.active)
-  this.run();
+    this.run();
 
   return this.unsub.bind(this, obs);
 };

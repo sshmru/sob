@@ -11,4 +11,17 @@ describe('Sob', function(){
     expect(new Sob()).to.be.object;
   });
 
+  it('initials', function(){
+    var sob = new Sob(function(){return cb});
+    expect(sob._runCallback).to.be.function;
+    expect(sob._completeCallback).to.be.undefined;
+  });
+
+  it('#run', function(){
+    var cb = function(){};
+    var sob = new Sob(function(){return cb});
+    sob.run();
+    expect(sob._completeCallback).to.eq(cb);
+  });
+
 });
